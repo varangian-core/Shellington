@@ -84,7 +84,12 @@ npx tsx core/index.ts server --port 3001
 - **Up/Down arrows**: Navigate command history
 - **Ctrl+A**: Toggle AI mode
 - **Ctrl+L**: Clear screen
-- **Ctrl+C** or **q**: Exit
+- **Ctrl+U**: Clear current input line
+- **Ctrl+R**: Reset input (emergency)
+- **Ctrl+C**: Exit (press twice to confirm)
+- **Ctrl+D**: Force exit
+- **q**: Exit (in TUI mode, press twice)
+- **exit** or **quit**: Exit command
 
 ### AI Mode
 

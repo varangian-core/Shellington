@@ -10,9 +10,36 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import dotenv from 'dotenv';
+import chalk from 'chalk';
 
 // Load environment variables
 dotenv.config();
+
+// Check if we're already inside Shellington
+if (process.env.SHELLINGTON_ACTIVE === 'true') {
+  console.error(chalk.red('Error: Shellington is already running!'));
+  console.error(chalk.yellow('You cannot run Shellington inside Shellington.'));
+  console.error(chalk.gray('Exit the current session first with "exit" command.'));
+  process.exit(1);
+}
+
+// Mark that Shellington is active
+process.env.SHELLINGTON_ACTIVE = 'true';
+
+// Handle process termination gracefully
+process.on('SIGINT', () => {
+  // Let individual components handle their own cleanup
+  // This is a fallback if they don't
+  setTimeout(() => {
+    console.log(chalk.yellow('\nForce exiting...'));
+    process.exit(0);
+  }, 3000);
+});
+
+process.on('SIGTERM', () => {
+  console.log(chalk.yellow('\nReceived SIGTERM, shutting down...'));
+  process.exit(0);
+});
 
 const program = new Command();
 
@@ -44,12 +71,51 @@ program
   .command('shell')
   .description('Start the interactive shell with TUI')
   .option('--no-ai', 'Disable AI assistant')
+  .option('--simple', 'Use simple REPL mode instead of TUI')
   .action((options) => {
     if (!options.ai) {
       process.env.SHELLINGTON_NO_AI = 'true';
     }
-    const tui = new TUI();
-    tui.start();
+    
+    if (options.simple || process.env.SHELLINGTON_SIMPLE_MODE === 'true') {
+      // Use simple REPL mode
+      import('./ui/simple-repl.js').then(({ startSimpleREPL }) => {
+        startSimpleREPL();
+      }).catch(err => {
+        console.error('Failed to load simple REPL:', err);
+        process.exit(1);
+      });
+    } else {
+      // Check if we should use simple mode for problematic terminals
+      const termType = process.env.TERM || '';
+      const problematicTerms = ['ghostty', 'xterm-ghostty'];
+      const shouldUseSimple = problematicTerms.some(term => termType.includes(term));
+      
+      if (shouldUseSimple) {
+        console.log(chalk.yellow(`Detected ${termType} terminal, using simple mode for better compatibility`));
+        import('./ui/simple-repl.js').then(({ startSimpleREPL }) => {
+          startSimpleREPL();
+        }).catch(err => {
+          console.error('Failed to load simple REPL:', err);
+          process.exit(1);
+        });
+      } else {
+        // Try TUI first, fall back to simple REPL on error
+        try {
+          const tui = new TUI();
+          tui.start();
+        } catch (error) {
+          console.error(chalk.yellow('TUI initialization failed, falling back to simple mode'));
+          console.error(chalk.gray(`Error: ${error.message}`));
+          import('./ui/simple-repl.js').then(({ startSimpleREPL }) => {
+            startSimpleREPL();
+          }).catch(err => {
+            console.error('Failed to load simple REPL:', err);
+            process.exit(1);
+          });
+        }
+      }
+    }
   });
 
 program
@@ -191,7 +257,33 @@ if (!process.argv.slice(2).some(arg => !arg.startsWith('-'))) {
     startAPIServer(port, options.host).catch(console.error);
   } else {
     // Default to TUI mode (also if --tui is specified)
-    const tui = new TUI();
-    tui.start();
+    // But use simple mode if requested or if TUI fails
+    if (process.env.SHELLINGTON_SIMPLE_MODE === 'true') {
+      import('./ui/simple-repl.js').then(({ startSimpleREPL }) => {
+        startSimpleREPL();
+      });
+    } else {
+      // Check terminal compatibility
+      const termType = process.env.TERM || '';
+      const problematicTerms = ['ghostty', 'xterm-ghostty'];
+      const shouldUseSimple = problematicTerms.some(term => termType.includes(term));
+      
+      if (shouldUseSimple) {
+        console.log(chalk.yellow(`Detected ${termType} terminal, using simple mode for better compatibility`));
+        import('./ui/simple-repl.js').then(({ startSimpleREPL }) => {
+          startSimpleREPL();
+        });
+      } else {
+        try {
+          const tui = new TUI();
+          tui.start();
+        } catch (error) {
+          console.error(chalk.yellow('TUI initialization failed, falling back to simple mode'));
+          import('./ui/simple-repl.js').then(({ startSimpleREPL }) => {
+            startSimpleREPL();
+          });
+        }
+      }
+    }
   }
 }

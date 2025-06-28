@@ -113,6 +113,21 @@ stats
 cd /path/to/directory
 ```
 
+## Terminal Compatibility Issues?
+
+If you're having issues with the TUI (like with ghostty terminal), use simple mode:
+
+```bash
+# Use simple REPL mode
+npm run dev -- shell --simple
+
+# Or set environment variable
+export SHELLINGTON_SIMPLE_MODE=true
+npm run dev:tui
+```
+
+Simple mode provides the same functionality with a basic readline interface.
+
 ## Troubleshooting
 
 ### SQLite Build Errors

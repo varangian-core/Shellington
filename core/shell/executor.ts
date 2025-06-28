@@ -19,9 +19,15 @@ export class CommandExecutor {
       const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/sh';
       const shellFlag = process.platform === 'win32' ? '/c' : '-c';
       
+      // Disable Ghostty shell integration to prevent command echoing
+      const cleanEnv = { ...this.env };
+      delete cleanEnv.GHOSTTY_SHELL_INTEGRATION_NO_SUDO;
+      delete cleanEnv.GHOSTTY_RESOURCES_DIR;
+      delete cleanEnv.GHOSTTY_BIN_DIR;
+      
       const options: SpawnOptions = {
         cwd: this.cwd,
-        env: this.env,
+        env: cleanEnv,
         shell: false,
       };
 
@@ -32,12 +38,12 @@ export class CommandExecutor {
 
       child.stdout?.on('data', (data) => {
         stdout += data.toString();
-        process.stdout.write(data);
+        // Don't write directly - let the UI handle display
       });
 
       child.stderr?.on('data', (data) => {
         stderr += data.toString();
-        process.stderr.write(data);
+        // Don't write directly - let the UI handle display
       });
 
       child.on('close', (code) => {
