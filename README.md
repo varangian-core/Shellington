@@ -24,9 +24,11 @@ npm install
 Start the interactive shell with the terminal UI:
 
 ```bash
-npm run dev:core
-# or
-node core/index.js shell
+npm run dev:tui
+# OR
+npm run dev -- --tui
+# OR (defaults to TUI)
+npm run dev
 ```
 
 ### Command Line Interface
@@ -54,7 +56,11 @@ node core/index.js ai "how do I find large files?"
 Start the API server for remote UI connections:
 
 ```bash
-node core/index.js server --port 3001
+npm run dev:api
+# OR
+npm run dev -- --api --port 3001
+# OR run both TUI and API
+npm run dev:all
 ```
 
 ## TUI Keyboard Shortcuts

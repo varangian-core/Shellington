@@ -9,13 +9,36 @@ import { startAPIServer } from './api/server.js';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const program = new Command();
 
 program
   .name('shellington')
   .description('AI-powered shell with remote UI')
-  .version('1.0.0');
+  .version('1.0.0')
+  .option('--tui', 'Start Terminal UI (default)')
+  .option('--api', 'Start API server')
+  .option('--gui', 'Start GUI (not yet implemented)')
+  .option('-p, --port <port>', 'API server port', '3001')
+  .option('--host <host>', 'API server host', 'localhost')
+  .addHelpText('after', `
+Examples:
+  $ shellington                    Start TUI (default)
+  $ shellington --tui              Start Terminal UI
+  $ shellington --api              Start API server
+  $ shellington --api --port 8080  Start API on port 8080
+  
+Quick commands:
+  $ shellington exec "ls -la"      Execute a command
+  $ shellington history            Show command history
+  $ shellington ai "help me"       Ask AI assistant
+
+Run 'shellington <command> --help' for command-specific help.
+`);
 
 program
   .command('shell')
@@ -151,10 +174,24 @@ program
     console.log('Shellington initialized successfully!');
   });
 
-// Default action - start the shell
-if (!process.argv.slice(2).length) {
-  const tui = new TUI();
-  tui.start();
-} else {
-  program.parse();
+// Parse command line arguments
+program.parse();
+
+// Handle default action with flags
+const options = program.opts();
+
+// If no subcommand was provided, handle the main flags
+if (!process.argv.slice(2).some(arg => !arg.startsWith('-'))) {
+  if (options.gui) {
+    console.error('GUI mode is not yet implemented. Please use --tui or --api');
+    process.exit(1);
+  } else if (options.api) {
+    // Start API server
+    const port = parseInt(options.port);
+    startAPIServer(port, options.host).catch(console.error);
+  } else {
+    // Default to TUI mode (also if --tui is specified)
+    const tui = new TUI();
+    tui.start();
+  }
 }
