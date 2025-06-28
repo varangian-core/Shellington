@@ -72,12 +72,21 @@ program
   .description('Start the interactive shell with TUI')
   .option('--no-ai', 'Disable AI assistant')
   .option('--simple', 'Use simple REPL mode instead of TUI')
+  .option('--enhanced', 'Use enhanced mode with execution/history view')
   .action((options) => {
     if (!options.ai) {
       process.env.SHELLINGTON_NO_AI = 'true';
     }
     
-    if (options.simple || process.env.SHELLINGTON_SIMPLE_MODE === 'true') {
+    if (options.enhanced) {
+      // Use enhanced mode
+      import('./ui/enhanced-repl.js').then(({ startEnhancedREPL }) => {
+        startEnhancedREPL();
+      }).catch(err => {
+        console.error('Failed to load enhanced REPL:', err);
+        process.exit(1);
+      });
+    } else if (options.simple || process.env.SHELLINGTON_SIMPLE_MODE === 'true') {
       // Use simple REPL mode
       import('./ui/simple-repl.js').then(({ startSimpleREPL }) => {
         startSimpleREPL();
