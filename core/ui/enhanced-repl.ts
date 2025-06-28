@@ -49,7 +49,8 @@ export class EnhancedREPL {
     const symbol = chalk.green(' $ ');
     const shellington = chalk.magenta('[🐚] ');
     const status = this.currentExecution ? chalk.yellow('[↻] ') : '';
-    return `${shellington}${status}${mode}${dir}${symbol}`;
+    const viewIndicator = this.displayMode === 'split' ? chalk.gray('[S] ') : chalk.gray('[F] ');
+    return `${shellington}${viewIndicator}${status}${mode}${dir}${symbol}`;
   }
 
   private startDisplay(): void {
@@ -89,8 +90,10 @@ export class EnhancedREPL {
     const header = chalk.bgBlue.white('='.repeat(padding) + title + '='.repeat(padding));
     
     console.log(header);
-    console.log(chalk.gray(`Mode: ${this.displayMode} | AI: ${this.aiMode ? 'ON' : 'OFF'} | ` +
-                           `Ctrl+H for help | Ctrl+T to toggle view\n`));
+    const viewMode = this.displayMode === 'split' ? 
+      chalk.yellow('SPLIT VIEW') : chalk.cyan('FOCUSED VIEW');
+    console.log(chalk.gray(`Mode: ${viewMode} | AI: ${this.aiMode ? 'ON' : 'OFF'} | ` +
+                           `Type 'toggle' to switch views\n`));
   }
 
   private async displaySplitView(): Promise<void> {
@@ -246,7 +249,8 @@ export class EnhancedREPL {
       // Ctrl+T - Toggle view (also try F2)
       if ((key.ctrl && key.name === 't') || key.name === 'f2') {
         this.displayMode = this.displayMode === 'split' ? 'focused' : 'split';
-        this.refreshDisplay();
+        console.log(chalk.green(`\n✓ Switched to ${this.displayMode} view mode`));
+        setTimeout(() => this.refreshDisplay(), 500);
         return;
       }
 
@@ -325,17 +329,22 @@ export class EnhancedREPL {
 
       case 'split':
         this.displayMode = 'split';
-        this.refreshDisplay();
+        console.log(chalk.green('\n✓ Switched to split view mode'));
+        setTimeout(() => this.refreshDisplay(), 500);
         return;
 
       case 'focused':
         this.displayMode = 'focused';
-        this.refreshDisplay();
+        console.log(chalk.green('\n✓ Switched to focused view mode'));
+        setTimeout(() => this.refreshDisplay(), 500);
         return;
 
       case 'toggle':
+      case 't':  // Short alias
+      case 'v':  // View alias
         this.displayMode = this.displayMode === 'split' ? 'focused' : 'split';
-        this.refreshDisplay();
+        console.log(chalk.green(`\n✓ Switched to ${this.displayMode} view mode`));
+        setTimeout(() => this.refreshDisplay(), 500);
         return;
     }
 
